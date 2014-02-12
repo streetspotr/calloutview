@@ -651,7 +651,7 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
  * The smallest possible distance from the edge of our control to the "tip" of the anchor from the left.
  */
 - (CGFloat)layoutLeftAnchorMargin {
-	CGFloat margin = 37.0f;
+	CGFloat margin = 38.0f;
 	
 	if (self.shouldDrawiOS7UserInterface) {
 		// adding the left accessory width ensures we won't display the arrow where the background color of the accessory should be
@@ -665,7 +665,7 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
  * The smallest possible distance from the edge of our control to the "tip" of the anchor from the right.
  */
 - (CGFloat)layoutRightAnchorMargin {
-	return 37.0f;
+	return 38.0f;
 }
 
 - (CGFloat)layoutDefaultHeight {

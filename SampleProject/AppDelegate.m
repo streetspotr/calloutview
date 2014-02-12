@@ -11,7 +11,7 @@
     // wrap it all up in a tab bar controller
     self.tabBarController = [UITabBarController new];
     self.tabBarController.viewControllers = @[
-      [[UINavigationController alloc] initWithRootViewController:mapKitController]];
+                                              [[UINavigationController alloc] initWithRootViewController:mapKitController]];
     
     // create the main window and display it
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];

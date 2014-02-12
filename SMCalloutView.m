@@ -637,7 +637,6 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     else
         self.rightAccessoryView.$y = [self layoutAccessoryYOrigin] + [self centeredPositionOfView:self.rightAccessoryView ifSmallerThan:ACCESSORY_HEIGHT] + dy;
     
-    
     if (self.contentView) {
         self.contentView.$x = self.layoutInnerContentMarginLeft;
         self.contentView.$y = TITLE_TOP + dy;
@@ -1131,10 +1130,6 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
 
 #pragma mark
 
-//
-// Custom-drawn flexible-height background implementation.
-// Contributed by Nicholas Shipes: https://github.com/u10int
-//
 @implementation SMCalloutDrawnBackgroundView
 
 - (id)initWithFrame:(CGRect)frame {
@@ -1258,6 +1253,10 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
 
 #pragma mark
 
+//
+// Custom-drawn flexible-height background implementation.
+// Contributed by Nicholas Shipes: https://github.com/u10int
+//
 @implementation SMCalloutDrawniOS6BackgroundView
 
 - (void)drawRect:(CGRect)rect {

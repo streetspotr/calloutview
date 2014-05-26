@@ -561,30 +561,30 @@ static UIImage *blackArrowImage = nil, *whiteArrowImage = nil, *grayArrowImage =
         
         self.containerView = [UIView new];
         self.containerView.backgroundColor = [UIColor whiteColor];
-        self.containerView.alpha = 0.96;
+        self.containerView.alpha = (CGFloat)0.96;
         self.containerView.layer.cornerRadius = 8;
         self.containerView.layer.shadowRadius = 30;
         self.containerView.layer.shadowOpacity = 0.1f;
         
         self.containerBorderView = [UIView new];
-        self.containerBorderView.layer.borderColor = [UIColor colorWithWhite:0 alpha:0.1].CGColor;
+        self.containerBorderView.layer.borderColor = [UIColor colorWithWhite:0 alpha:(CGFloat)0.1].CGColor;
         self.containerBorderView.layer.borderWidth = 0.5;
         self.containerBorderView.layer.cornerRadius = 8.5;
         
         if (!blackArrowImage) {
             blackArrowImage = [SMCalloutBackgroundView embeddedImageNamed:@"CalloutArrow"];
             whiteArrowImage = [self image:blackArrowImage withColor:[UIColor whiteColor]];
-            grayArrowImage = [self image:blackArrowImage withColor:[UIColor colorWithWhite:0.85 alpha:1]];
+            grayArrowImage = [self image:blackArrowImage withColor:[UIColor colorWithWhite:(CGFloat)0.85 alpha:1]];
         }
         
         self.arrowView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, blackArrowImage.size.width, blackArrowImage.size.height)];
-        self.arrowView.alpha = 0.96;
+        self.arrowView.alpha = (CGFloat)0.96;
         self.arrowImageView = [[UIImageView alloc] initWithImage:whiteArrowImage];
         self.arrowHighlightedImageView = [[UIImageView alloc] initWithImage:grayArrowImage];
         self.arrowHighlightedImageView.hidden = YES;
         self.arrowBorderView = [[UIImageView alloc] initWithImage:blackArrowImage];
-        self.arrowBorderView.alpha = 0.1;
-        self.arrowBorderView.smY = 0.5;
+        self.arrowBorderView.alpha = (CGFloat)0.1;
+        self.arrowBorderView.smY = (CGFloat)0.5;
         
         [self addSubview:self.containerView];
         [self.containerView addSubview:self.containerBorderView];
@@ -604,7 +604,7 @@ static UIImage *blackArrowImage = nil, *whiteArrowImage = nil, *grayArrowImage =
 
 - (void)setHighlighted:(BOOL)highlighted {
     [super setHighlighted:highlighted];
-    self.containerView.backgroundColor = highlighted ? [UIColor colorWithWhite:0.85 alpha:1] : [UIColor whiteColor];
+    self.containerView.backgroundColor = highlighted ? [UIColor colorWithWhite:(CGFloat)0.85 alpha:1] : [UIColor whiteColor];
     self.arrowImageView.hidden = highlighted;
     self.arrowHighlightedImageView.hidden = !highlighted;
 }
@@ -631,17 +631,17 @@ static UIImage *blackArrowImage = nil, *whiteArrowImage = nil, *grayArrowImage =
     // if we're pointing up, we'll need to push almost everything down a bit
     CGFloat dy = pointingUp ? TOP_ANCHOR_MARGIN : 0;
 
-    self.containerView.frame = CGRectMake(0, dy, self.smWidth, self.smHeight - self.arrowView.smHeight + 0.5);
+    self.containerView.frame = CGRectMake(0, dy, self.smWidth, self.smHeight - self.arrowView.smHeight + (CGFloat)0.5);
     self.containerBorderView.frame = CGRectInset(self.containerView.bounds, -0.5, -0.5);
 
     self.arrowView.smX = (CGFloat)round(self.arrowPoint.x - self.arrowView.smWidth / 2);
     
     if (pointingUp) {
         self.arrowView.smY = 1;
-        self.arrowView.transform = CGAffineTransformMakeRotation(M_PI);
+        self.arrowView.transform = CGAffineTransformMakeRotation((CGFloat)M_PI);
     }
     else {
-        self.arrowView.smY = self.containerView.smHeight - 0.5;
+        self.arrowView.smY = self.containerView.smHeight - (CGFloat)0.5;
         self.arrowView.transform = CGAffineTransformIdentity;
     }
 }

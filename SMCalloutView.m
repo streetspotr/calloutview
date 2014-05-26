@@ -78,6 +78,22 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
         [self.delegate calloutViewClicked:self];
 }
 
+// pointInside and hitTest implementations to support clicking the callout;
+// the corresponding annotation view has to call through these, too:
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event
+{
+	return [self.containerView pointInside:[self.containerView convertPoint:point fromView:self] withEvent:event];
+}
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event
+{
+	if ([self pointInside:point withEvent:event]) {
+		return self.containerView;
+	}
+	return nil;
+}
+
 - (UIView *)titleViewOrDefault {
     if (self.titleView)
         // if you have a custom title view defined, return that.

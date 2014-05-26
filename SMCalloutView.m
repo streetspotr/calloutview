@@ -25,7 +25,7 @@
 #define SUBTITLE_TOP 24 // the top of the subtitle, when present
 #define SUBTITLE_HEIGHT 15 // subtitle height, fixed
 #define BETWEEN_ACCESSORIES_MARGIN 7 // margin between accessories when no title/subtitle is present
-#define CONTENT_VIEW_MARGIN 13 // margin around content view when present
+#define CONTENT_VIEW_MARGIN 2 // margin around content view when present
 #define ANCHOR_MARGIN 27 // the smallest possible distance from the edge of our control to the "tip" of the anchor, from either left or right
 #define ANCHOR_HEIGHT 13 // effective height of the anchor
 #define TOP_ANCHOR_MARGIN 13 // all the above measurements assume a bottom anchor! if we're pointing "up" we'll need to add this top margin to everything.
@@ -160,14 +160,18 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
 }
 
 - (CGFloat)innerContentMarginLeft {
-    if (self.leftAccessoryView)
+	if (self.contentView)
+		return CONTENT_VIEW_MARGIN;
+    else if (self.leftAccessoryView)
         return self.leftAccessoryMargin + self.leftAccessoryView.$width + TITLE_HMARGIN;
     else
         return TITLE_HMARGIN;
 }
 
 - (CGFloat)innerContentMarginRight {
-    if (self.rightAccessoryView)
+	if (self.contentView)
+		return CONTENT_VIEW_MARGIN;
+    else if (self.rightAccessoryView)
         return self.rightAccessoryMargin + self.rightAccessoryView.$width + TITLE_HMARGIN;
     else
         return TITLE_HMARGIN;
@@ -508,7 +512,7 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     
     if (self.contentView) {
         self.contentView.$x = self.innerContentMarginLeft;
-        self.contentView.$y = TITLE_TOP + dy;
+        self.contentView.$y = CONTENT_VIEW_MARGIN + dy;
     }
 }
 

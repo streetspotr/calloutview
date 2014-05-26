@@ -83,7 +83,11 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event
 {
-	return [self.containerView pointInside:[self.containerView convertPoint:point fromView:self] withEvent:event];
+	UIView *testView = self.contentView;
+	if (!testView) {
+		testView = self.containerView;
+	}
+	return [testView pointInside:[testView convertPoint:point fromView:self] withEvent:event];
 }
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event

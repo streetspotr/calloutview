@@ -70,6 +70,11 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     return self;
 }
 
+- (void)dealloc
+{
+	[self.layer removeAllAnimations];
+}
+
 - (BOOL)supportsHighlighting {
     if (![self.delegate respondsToSelector:@selector(calloutViewClicked:)])
         return NO;

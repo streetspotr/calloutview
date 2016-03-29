@@ -281,7 +281,7 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     CGFloat nudgeLeft = (CGFloat)fmin(0, CGRectGetMaxX(outerRect) - CGRectGetMaxX(innerRect));
     CGFloat nudgeTop = (CGFloat)fmax(0, CGRectGetMinY(outerRect) - CGRectGetMinY(innerRect));
     CGFloat nudgeBottom = (CGFloat)fmin(0, CGRectGetMaxY(outerRect) - CGRectGetMaxY(innerRect));
-    return CGSizeMake(nudgeLeft ? nudgeLeft : nudgeRight, nudgeTop ? nudgeTop : nudgeBottom);
+    return CGSizeMake((CGFloat)((nudgeLeft < -0.0001 || nudgeLeft > 0.0001) ? nudgeLeft : nudgeRight), (CGFloat)((nudgeTop < -0.0001 || nudgeTop > 0.0001) ? nudgeTop : nudgeBottom));
 }
 
 - (void)presentCalloutFromRect:(CGRect)rect inView:(UIView *)view constrainedToView:(UIView *)constrainedView animated:(BOOL)animated {

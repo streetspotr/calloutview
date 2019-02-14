@@ -5,10 +5,10 @@
 //
 
 @interface UIView (SMFrameAdditions)
-@property (nonatomic, assign) CGPoint smOrigin;
-@property (nonatomic, assign) CGSize smSize;
-@property (nonatomic, assign) CGFloat smX, smY, smWidth, smHeight; // normal rect properties
-@property (nonatomic, assign) CGFloat smLeft, smTop, smRight, smBottom; // these will stretch/shrink the rect
+@property (nonatomic, assign) CGPoint frameOrigin;
+@property (nonatomic, assign) CGSize frameSize;
+@property (nonatomic, assign) CGFloat frameX, frameY, frameWidth, frameHeight; // normal rect properties
+@property (nonatomic, assign) CGFloat frameLeft, frameTop, frameRight, frameBottom; // these will stretch/shrink the rect
 @end
 
 //
@@ -25,13 +25,10 @@
 #define SUBTITLE_TOP 28 // the top of the subtitle, when present
 #define SUBTITLE_HEIGHT 15 // subtitle height, fixed
 #define BETWEEN_ACCESSORIES_MARGIN 7 // margin between accessories when no title/subtitle is present
-#define CONTENT_VIEW_MARGIN 2 // margin around content view when present
-#define ANCHOR_MARGIN 27 // the smallest possible distance from the edge of our control to the "tip" of the anchor, from either left or right
-#define ANCHOR_HEIGHT 13 // effective height of the anchor
 #define TOP_ANCHOR_MARGIN 13 // all the above measurements assume a bottom anchor! if we're pointing "up" we'll need to add this top margin to everything.
-#define COMFORTABLE_MARGIN 6 // when we try to reposition content to be visible, we'll consider this margin around your target rect
+#define COMFORTABLE_MARGIN 10 // when we try to reposition content to be visible, we'll consider this margin around your target rect
 
-NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
+NSTimeInterval const kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
 
 @interface SMCalloutView ()
 @property (nonatomic, strong) UIButton *containerView; // for masking and interaction
@@ -62,17 +59,15 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
         self.dismissAnimation = SMCalloutAnimationFade;
         self.backgroundColor = [UIColor clearColor];
         self.containerView = [UIButton new];
+        self.containerView.isAccessibilityElement = NO;
+        self.isAccessibilityElement = NO;
+        self.contentViewInset = UIEdgeInsetsMake(12, 12, 12, 12);
 
         [self.containerView addTarget:self action:@selector(highlightIfNecessary) forControlEvents:UIControlEventTouchDown | UIControlEventTouchDragInside];
         [self.containerView addTarget:self action:@selector(unhighlightIfNecessary) forControlEvents:UIControlEventTouchDragOutside | UIControlEventTouchCancel | UIControlEventTouchUpOutside | UIControlEventTouchUpInside];
         [self.containerView addTarget:self action:@selector(calloutClicked) forControlEvents:UIControlEventTouchUpInside];
     }
     return self;
-}
-
-- (void)dealloc
-{
-	[self.layer removeAllAnimations];
 }
 
 - (BOOL)supportsHighlighting {
@@ -91,26 +86,6 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
         [self.delegate calloutViewClicked:self];
 }
 
-// pointInside and hitTest implementations to support clicking the callout;
-// the corresponding annotation view has to call through these, too:
-
-- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event
-{
-	UIView *testView = self.contentView;
-	if (!testView) {
-		testView = self.containerView;
-	}
-	return [testView pointInside:[testView convertPoint:point fromView:self] withEvent:event];
-}
-
-- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event
-{
-	if ([self pointInside:point withEvent:event]) {
-		return self.containerView;
-	}
-	return nil;
-}
-
 - (UIView *)titleViewOrDefault {
     if (self.titleView)
         // if you have a custom title view defined, return that.
@@ -119,7 +94,7 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
         if (!self.titleLabel) {
             // create a default titleView
             self.titleLabel = [UILabel new];
-            self.titleLabel.smHeight = TITLE_HEIGHT;
+            self.titleLabel.frameHeight = TITLE_HEIGHT;
             self.titleLabel.opaque = NO;
             self.titleLabel.backgroundColor = [UIColor clearColor];
             self.titleLabel.font = [UIFont systemFontOfSize:17];
@@ -137,7 +112,7 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
         if (!self.subtitleLabel) {
             // create a default subtitleView
             self.subtitleLabel = [UILabel new];
-            self.subtitleLabel.smHeight = SUBTITLE_HEIGHT;
+            self.subtitleLabel.frameHeight = SUBTITLE_HEIGHT;
             self.subtitleLabel.opaque = NO;
             self.subtitleLabel.backgroundColor = [UIColor clearColor];
             self.subtitleLabel.font = [UIFont systemFontOfSize:12];
@@ -180,52 +155,48 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
 // than the callout, otherwise they grow from the upper corner.
 
 - (CGFloat)leftAccessoryVerticalMargin {
-	if (self.leftAccessoryView.smHeight < self.calloutContainerHeight)
-		return (CGFloat)round((self.calloutContainerHeight - self.leftAccessoryView.smHeight) / 2);
+    if (self.leftAccessoryView.frameHeight < self.calloutContainerHeight)
+        return roundf((self.calloutContainerHeight - self.leftAccessoryView.frameHeight) / 2);
     else
-        return (CGFloat)0;
+        return 0;
 }
 
 - (CGFloat)leftAccessoryHorizontalMargin {
-    return MIN(self.leftAccessoryVerticalMargin, TITLE_HMARGIN);
+    return fminf(self.leftAccessoryVerticalMargin, TITLE_HMARGIN);
 }
 
 - (CGFloat)rightAccessoryVerticalMargin {
-	if (self.rightAccessoryView.smHeight < self.calloutContainerHeight)
-		return (CGFloat)round((self.calloutContainerHeight - self.rightAccessoryView.smHeight) / 2);
+    if (self.rightAccessoryView.frameHeight < self.calloutContainerHeight)
+        return roundf((self.calloutContainerHeight - self.rightAccessoryView.frameHeight) / 2);
     else
-        return (CGFloat)0;
+        return 0;
 }
 
 - (CGFloat)rightAccessoryHorizontalMargin {
-    return MIN(self.rightAccessoryVerticalMargin, TITLE_HMARGIN);
+    return fminf(self.rightAccessoryVerticalMargin, TITLE_HMARGIN);
 }
 
 - (CGFloat)innerContentMarginLeft {
-	if (self.contentView)
-		return CONTENT_VIEW_MARGIN;
-    else if (self.leftAccessoryView)
-        return self.leftAccessoryHorizontalMargin + self.leftAccessoryView.smWidth + TITLE_HMARGIN;
+    if (self.leftAccessoryView)
+        return self.leftAccessoryHorizontalMargin + self.leftAccessoryView.frameWidth + TITLE_HMARGIN;
     else
-        return TITLE_HMARGIN;
+        return self.contentViewInset.left;
 }
 
 - (CGFloat)innerContentMarginRight {
-	if (self.contentView)
-		return CONTENT_VIEW_MARGIN;
-    else if (self.rightAccessoryView)
-        return self.rightAccessoryHorizontalMargin + self.rightAccessoryView.smWidth + TITLE_HMARGIN;
+    if (self.rightAccessoryView)
+        return self.rightAccessoryHorizontalMargin + self.rightAccessoryView.frameWidth + TITLE_HMARGIN;
     else
-        return TITLE_HMARGIN;
+        return self.contentViewInset.right;
 }
 
 - (CGFloat)calloutHeight {
-    return self.calloutContainerHeight + ANCHOR_HEIGHT;
+    return self.calloutContainerHeight + self.backgroundView.anchorHeight;
 }
 
 - (CGFloat)calloutContainerHeight {
     if (self.contentView)
-		return self.contentView.smHeight + CONTENT_VIEW_MARGIN * 2;
+        return self.contentView.frameHeight + self.contentViewInset.bottom + self.contentViewInset.top;
     else if (self.subtitleView || self.subtitle.length > 0)
         return CALLOUT_SUB_DEFAULT_CONTAINER_HEIGHT;
     else
@@ -253,35 +224,35 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     if (self.contentView) {
         
         // if we have a content view, then take our preferred size directly from that
-        preferredWidth = self.contentView.smWidth + margin;
+        preferredWidth = self.contentView.frameWidth + margin;
     }
     else if (preferredTitleSize.width >= 0.000001 || preferredSubtitleSize.width >= 0.000001) {
         
         // if we have a title or subtitle, then our assumed margins are valid, and we can apply them
-        preferredWidth = (CGFloat)fmax(preferredTitleSize.width, preferredSubtitleSize.width) + margin;
+        preferredWidth = fmaxf(preferredTitleSize.width, preferredSubtitleSize.width) + margin;
     }
     else {
         // ok we have no title or subtitle to speak of. In this case, the system callout would actually not display
         // at all! But we can handle it.
-        preferredWidth = self.leftAccessoryView.smWidth + self.rightAccessoryView.smWidth + self.leftAccessoryHorizontalMargin + self.rightAccessoryHorizontalMargin;
-
+        preferredWidth = self.leftAccessoryView.frameWidth + self.rightAccessoryView.frameWidth + self.leftAccessoryHorizontalMargin + self.rightAccessoryHorizontalMargin;
+        
         if (self.leftAccessoryView && self.rightAccessoryView)
             preferredWidth += BETWEEN_ACCESSORIES_MARGIN;
     }
     
     // ensure we're big enough to fit our graphics!
-    preferredWidth = (CGFloat)fmax(preferredWidth, CALLOUT_MIN_WIDTH);
+    preferredWidth = fmaxf(preferredWidth, CALLOUT_MIN_WIDTH);
     
     // ask to be smaller if we have space, otherwise we'll fit into what we have by truncating the title/subtitle.
-    return CGSizeMake((CGFloat)fmin(preferredWidth, size.width), self.calloutHeight);
+    return CGSizeMake(fminf(preferredWidth, size.width), self.calloutHeight);
 }
 
 - (CGSize)offsetToContainRect:(CGRect)innerRect inRect:(CGRect)outerRect {
-    CGFloat nudgeRight = (CGFloat)fmax(0, CGRectGetMinX(outerRect) - CGRectGetMinX(innerRect));
-    CGFloat nudgeLeft = (CGFloat)fmin(0, CGRectGetMaxX(outerRect) - CGRectGetMaxX(innerRect));
-    CGFloat nudgeTop = (CGFloat)fmax(0, CGRectGetMinY(outerRect) - CGRectGetMinY(innerRect));
-    CGFloat nudgeBottom = (CGFloat)fmin(0, CGRectGetMaxY(outerRect) - CGRectGetMaxY(innerRect));
-    return CGSizeMake((CGFloat)((nudgeLeft < -0.0001 || nudgeLeft > 0.0001) ? nudgeLeft : nudgeRight), (CGFloat)((nudgeTop < -0.0001 || nudgeTop > 0.0001) ? nudgeTop : nudgeBottom));
+    CGFloat nudgeRight = fmaxf(0, CGRectGetMinX(outerRect) - CGRectGetMinX(innerRect));
+    CGFloat nudgeLeft = fminf(0, CGRectGetMaxX(outerRect) - CGRectGetMaxX(innerRect));
+    CGFloat nudgeTop = fmaxf(0, CGRectGetMinY(outerRect) - CGRectGetMinY(innerRect));
+    CGFloat nudgeBottom = fminf(0, CGRectGetMaxY(outerRect) - CGRectGetMaxY(innerRect));
+    return CGSizeMake(nudgeLeft ? nudgeLeft : nudgeRight, nudgeTop ? nudgeTop : nudgeBottom);
 }
 
 - (void)presentCalloutFromRect:(CGRect)rect inView:(UIView *)view constrainedToView:(UIView *)constrainedView animated:(BOOL)animated {
@@ -298,8 +269,9 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     // Sanity check: dismiss this callout immediately if it's displayed somewhere
     if (self.layer.superlayer) [self dismissCalloutAnimated:NO];
     
-    // cancel any presenting animation that may be in progress
+    // cancel all animations that may be in progress
     [self.layer removeAnimationForKey:@"present"];
+    [self.layer removeAnimationForKey:@"dismiss"];
 
     // figure out the constrained view's rect in our popup view's coordinate system
     CGRect constrainedRect = [constrainedLayer convertRect:constrainedLayer.bounds toLayer:layer];
@@ -317,7 +289,7 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     self.subtitleLabel.text = self.subtitle;
     
     // size the callout to fit the width constraint as best as possible
-    self.smSize = [self sizeThatFits:CGSizeMake(constrainedRect.size.width, self.calloutHeight)];
+    self.frameSize = [self sizeThatFits:CGSizeMake(constrainedRect.size.width, self.calloutHeight)];
     
     // how much room do we have in the constraint box, both above and below our target rect?
     CGFloat topSpace = CGRectGetMinY(rect) - CGRectGetMinY(constrainedRect);
@@ -343,18 +315,18 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     CGFloat anchorY = self.calloutOffset.y + (bestDirection == SMCalloutArrowDirectionDown ? CGRectGetMinY(rect) : CGRectGetMaxY(rect));
     
     // we prefer to sit centered directly above our anchor
-    CGFloat calloutX = (CGFloat)round(anchorX - self.smWidth / 2);
+    CGFloat calloutX = roundf(anchorX - self.frameWidth / 2);
     
     // but not if it's going to get too close to the edge of our constraints
     if (calloutX < constrainedRect.origin.x)
         calloutX = constrainedRect.origin.x;
 
-    if (calloutX > constrainedRect.origin.x+constrainedRect.size.width-self.smWidth)
-        calloutX = constrainedRect.origin.x+constrainedRect.size.width-self.smWidth;
+    if (calloutX > constrainedRect.origin.x+constrainedRect.size.width-self.frameWidth)
+        calloutX = constrainedRect.origin.x+constrainedRect.size.width-self.frameWidth;
     
     // what's the farthest to the left and right that we could point to, given our background image constraints?
-    CGFloat minPointX = calloutX + ANCHOR_MARGIN;
-    CGFloat maxPointX = calloutX + self.smWidth - ANCHOR_MARGIN;
+    CGFloat minPointX = calloutX + self.backgroundView.anchorMargin;
+    CGFloat maxPointX = calloutX + self.frameWidth - self.backgroundView.anchorMargin;
     
     // we may need to scoot over to the left or right to point at the correct spot
     CGFloat adjustX = 0;
@@ -372,7 +344,7 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
         .y = bestDirection == SMCalloutArrowDirectionDown ? (anchorY - self.calloutHeight) : anchorY
     };
     
-    self.smOrigin = calloutOrigin;
+    self.frameOrigin = calloutOrigin;
     
     // now set the *actual* anchor point for our layer so that our "popup" animation starts from this point.
     CGPoint anchorPoint = [layer convertPoint:CGPointMake(anchorX, anchorY) toLayer:self.layer];
@@ -381,17 +353,17 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     self.backgroundView.arrowPoint = anchorPoint;
     
     // adjust it to unit coordinates for the actual layer.anchorPoint property
-    anchorPoint.x /= self.smWidth;
-    anchorPoint.y /= self.smHeight;
+    anchorPoint.x /= self.frameWidth;
+    anchorPoint.y /= self.frameHeight;
     self.layer.anchorPoint = anchorPoint;
     
     // setting the anchor point moves the view a bit, so we need to reset
-    self.smOrigin = calloutOrigin;
+    self.frameOrigin = calloutOrigin;
     
     // make sure our frame is not on half-pixels or else we may be blurry!
     CGFloat scale = [UIScreen mainScreen].scale;
-    self.smX = (CGFloat)floor(self.smX*scale)/scale;
-    self.smY = (CGFloat)floor(self.smY*scale)/scale;
+    self.frameX = floorf(self.frameX*scale)/scale;
+    self.frameY = floorf(self.frameY*scale)/scale;
     
     // layout now so we can immediately start animating to the final position if needed
     [self setNeedsLayout];
@@ -448,7 +420,6 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
 }
 
 - (void)animationDidStop:(CAAnimation *)anim finished:(BOOL)finished {
-#pragma unused(finished)
     BOOL presenting = [[anim valueForKey:@"presenting"] boolValue];
 
     if (presenting && finished) {
@@ -510,7 +481,7 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
         bounce.duration = 0.23;
         bounce.fromValue = presenting ? @0.7 : @1.0;
         bounce.toValue = presenting ? @1.0 : @0.7;
-        bounce.timingFunction = [CAMediaTimingFunction functionWithControlPoints:0.59367f:0.12066f:0.18878f:1.5814f];
+        bounce.timingFunction = [CAMediaTimingFunction functionWithControlPoints:0.59367:0.12066:0.18878:1.5814];
 
         CAAnimationGroup *group = [CAAnimationGroup animation];
         group.animations = @[fade, bounce];
@@ -549,24 +520,62 @@ NSTimeInterval kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
     // if we're pointing up, we'll need to push almost everything down a bit
     CGFloat dy = self.currentArrowDirection == SMCalloutArrowDirectionUp ? TOP_ANCHOR_MARGIN : 0;
     
-    self.titleViewOrDefault.smX = self.innerContentMarginLeft;
-    self.titleViewOrDefault.smY = (self.subtitleView || self.subtitle.length ? TITLE_SUB_TOP : TITLE_TOP) + dy;
-    self.titleViewOrDefault.smWidth = self.smWidth - self.innerContentMarginLeft - self.innerContentMarginRight;
+    self.titleViewOrDefault.frameX = self.innerContentMarginLeft;
+    self.titleViewOrDefault.frameY = (self.subtitleView || self.subtitle.length ? TITLE_SUB_TOP : TITLE_TOP) + dy;
+    self.titleViewOrDefault.frameWidth = self.frameWidth - self.innerContentMarginLeft - self.innerContentMarginRight;
     
-    self.subtitleViewOrDefault.smX = self.titleViewOrDefault.smX;
-    self.subtitleViewOrDefault.smY = SUBTITLE_TOP + dy;
-    self.subtitleViewOrDefault.smWidth = self.titleViewOrDefault.smWidth;
+    self.subtitleViewOrDefault.frameX = self.titleViewOrDefault.frameX;
+    self.subtitleViewOrDefault.frameY = SUBTITLE_TOP + dy;
+    self.subtitleViewOrDefault.frameWidth = self.titleViewOrDefault.frameWidth;
     
-    self.leftAccessoryView.smX = self.leftAccessoryHorizontalMargin;
-    self.leftAccessoryView.smY = self.leftAccessoryVerticalMargin + dy;
+    self.leftAccessoryView.frameX = self.leftAccessoryHorizontalMargin;
+    self.leftAccessoryView.frameY = self.leftAccessoryVerticalMargin + dy;
     
-    self.rightAccessoryView.smX = self.smWidth-self.rightAccessoryHorizontalMargin-self.rightAccessoryView.smWidth;
-    self.rightAccessoryView.smY = self.rightAccessoryVerticalMargin + dy;
+    self.rightAccessoryView.frameX = self.frameWidth - self.rightAccessoryHorizontalMargin - self.rightAccessoryView.frameWidth;
+    self.rightAccessoryView.frameY = self.rightAccessoryVerticalMargin + dy;
     
     if (self.contentView) {
-        self.contentView.smX = self.innerContentMarginLeft;
-        self.contentView.smY = CONTENT_VIEW_MARGIN + dy;
+        self.contentView.frameX = self.innerContentMarginLeft;
+        self.contentView.frameY = self.contentViewInset.top + dy;
     }
+}
+
+#pragma mark - Accessibility
+
+- (NSInteger)accessibilityElementCount {
+    return (!!self.leftAccessoryView + !!self.titleViewOrDefault +
+            !!self.subtitleViewOrDefault + !!self.rightAccessoryView);
+}
+
+- (id)accessibilityElementAtIndex:(NSInteger)index {
+    if (index == 0) {
+        return self.leftAccessoryView ? self.leftAccessoryView : self.titleViewOrDefault;
+    }
+    if (index == 1) {
+        return self.leftAccessoryView ? self.titleViewOrDefault : self.subtitleViewOrDefault;
+    }
+    if (index == 2) {
+        return self.leftAccessoryView ? self.subtitleViewOrDefault : self.rightAccessoryView;
+    }
+    if (index == 3) {
+        return self.leftAccessoryView ? self.rightAccessoryView : nil;
+    }
+    return nil;
+}
+
+- (NSInteger)indexOfAccessibilityElement:(id)element {
+    if (element == nil) return NSNotFound;
+    if (element == self.leftAccessoryView) return 0;
+    if (element == self.titleViewOrDefault) {
+        return self.leftAccessoryView ? 1 : 0;
+    }
+    if (element == self.subtitleViewOrDefault) {
+        return self.leftAccessoryView ? 2 : 1;
+    }
+    if (element == self.rightAccessoryView) {
+        return self.leftAccessoryView ? 3 : 2;
+    }
+    return NSNotFound;
 }
 
 @end
@@ -597,30 +606,33 @@ static UIImage *blackArrowImage = nil, *whiteArrowImage = nil, *grayArrowImage =
         
         self.containerView = [UIView new];
         self.containerView.backgroundColor = [UIColor whiteColor];
-        self.containerView.alpha = (CGFloat)0.96;
+        self.containerView.alpha = 0.96;
         self.containerView.layer.cornerRadius = 8;
         self.containerView.layer.shadowRadius = 30;
-        self.containerView.layer.shadowOpacity = 0.1f;
+        self.containerView.layer.shadowOpacity = 0.1;
         
         self.containerBorderView = [UIView new];
-        self.containerBorderView.layer.borderColor = [UIColor colorWithWhite:0 alpha:(CGFloat)0.1].CGColor;
+        self.containerBorderView.layer.borderColor = [UIColor colorWithWhite:0 alpha:0.1].CGColor;
         self.containerBorderView.layer.borderWidth = 0.5;
         self.containerBorderView.layer.cornerRadius = 8.5;
         
         if (!blackArrowImage) {
             blackArrowImage = [SMCalloutBackgroundView embeddedImageNamed:@"CalloutArrow"];
             whiteArrowImage = [self image:blackArrowImage withColor:[UIColor whiteColor]];
-            grayArrowImage = [self image:blackArrowImage withColor:[UIColor colorWithWhite:(CGFloat)0.85 alpha:1]];
+            grayArrowImage = [self image:blackArrowImage withColor:[UIColor colorWithWhite:0.85 alpha:1]];
         }
         
+        self.anchorHeight = 13;
+        self.anchorMargin = 27;
+        
         self.arrowView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, blackArrowImage.size.width, blackArrowImage.size.height)];
-        self.arrowView.alpha = (CGFloat)0.96;
+        self.arrowView.alpha = 0.96;
         self.arrowImageView = [[UIImageView alloc] initWithImage:whiteArrowImage];
         self.arrowHighlightedImageView = [[UIImageView alloc] initWithImage:grayArrowImage];
         self.arrowHighlightedImageView.hidden = YES;
         self.arrowBorderView = [[UIImageView alloc] initWithImage:blackArrowImage];
-        self.arrowBorderView.alpha = (CGFloat)0.1;
-        self.arrowBorderView.smY = (CGFloat)0.5;
+        self.arrowBorderView.alpha = 0.1;
+        self.arrowBorderView.frameY = 0.5;
         
         [self addSubview:self.containerView];
         [self.containerView addSubview:self.containerBorderView];
@@ -640,7 +652,7 @@ static UIImage *blackArrowImage = nil, *whiteArrowImage = nil, *grayArrowImage =
 
 - (void)setHighlighted:(BOOL)highlighted {
     [super setHighlighted:highlighted];
-    self.containerView.backgroundColor = highlighted ? [UIColor colorWithWhite:(CGFloat)0.85 alpha:1] : [UIColor whiteColor];
+    self.containerView.backgroundColor = highlighted ? [UIColor colorWithWhite:0.85 alpha:1] : [UIColor whiteColor];
     self.arrowImageView.hidden = highlighted;
     self.arrowHighlightedImageView.hidden = !highlighted;
 }
@@ -662,22 +674,22 @@ static UIImage *blackArrowImage = nil, *whiteArrowImage = nil, *grayArrowImage =
 
 - (void)layoutSubviews {
     
-    BOOL pointingUp = self.arrowPoint.y < self.smHeight/2;
+    BOOL pointingUp = self.arrowPoint.y < self.frameHeight/2;
 
     // if we're pointing up, we'll need to push almost everything down a bit
     CGFloat dy = pointingUp ? TOP_ANCHOR_MARGIN : 0;
 
-    self.containerView.frame = CGRectMake(0, dy, self.smWidth, self.smHeight - self.arrowView.smHeight + (CGFloat)0.5);
+    self.containerView.frame = CGRectMake(0, dy, self.frameWidth, self.frameHeight - self.arrowView.frameHeight + 0.5);
     self.containerBorderView.frame = CGRectInset(self.containerView.bounds, -0.5, -0.5);
 
-    self.arrowView.smX = (CGFloat)round(self.arrowPoint.x - self.arrowView.smWidth / 2);
+    self.arrowView.frameX = roundf(self.arrowPoint.x - self.arrowView.frameWidth / 2);
     
     if (pointingUp) {
-        self.arrowView.smY = 1;
-        self.arrowView.transform = CGAffineTransformMakeRotation((CGFloat)M_PI);
+        self.arrowView.frameY = 1;
+        self.arrowView.transform = CGAffineTransformMakeRotation(M_PI);
     }
     else {
-        self.arrowView.smY = self.containerView.smHeight - (CGFloat)0.5;
+        self.arrowView.frameY = self.containerView.frameHeight - 0.5;
         self.arrowView.transform = CGAffineTransformIdentity;
     }
 }
@@ -760,17 +772,17 @@ static UIImage *blackArrowImage = nil, *whiteArrowImage = nil, *grayArrowImage =
         if (decoded != 99) {
             accumulated[accumulator] = decoded;
             if (accumulator == 3) {
-                outputBytes[outputLength++] = (unsigned char)((accumulated[0] << 2) | (accumulated[1] >> 4));
-                outputBytes[outputLength++] = (unsigned char)((accumulated[1] << 4) | (accumulated[2] >> 2));
-                outputBytes[outputLength++] = (unsigned char)((accumulated[2] << 6) | accumulated[3]);
+                outputBytes[outputLength++] = (accumulated[0] << 2) | (accumulated[1] >> 4);
+                outputBytes[outputLength++] = (accumulated[1] << 4) | (accumulated[2] >> 2);
+                outputBytes[outputLength++] = (accumulated[2] << 6) | accumulated[3];
             }
             accumulator = (accumulator + 1) % 4;
         }
     }
     
     //handle left-over data
-    if (accumulator > 0) outputBytes[outputLength] = (unsigned char)((accumulated[0] << 2) | (accumulated[1] >> 4));
-    if (accumulator > 1) outputBytes[++outputLength] = (unsigned char)((accumulated[1] << 4) | (accumulated[2] >> 2));
+    if (accumulator > 0) outputBytes[outputLength] = (accumulated[0] << 2) | (accumulated[1] >> 4);
+    if (accumulator > 1) outputBytes[++outputLength] = (accumulated[1] << 4) | (accumulated[2] >> 2);
     if (accumulator > 2) outputLength++;
     
     //truncate data to match actual output length
@@ -784,7 +796,7 @@ static UIImage *blackArrowImage = nil, *whiteArrowImage = nil, *grayArrowImage =
         name = [name stringByAppendingString:@"_2x"];
         screenScale = 2.0;
     }
-
+    
     SEL selector = NSSelectorFromString(name);
     
     if (![(id)self respondsToSelector:selector]) {
@@ -814,34 +826,34 @@ static UIImage *blackArrowImage = nil, *whiteArrowImage = nil, *grayArrowImage =
 
 @implementation UIView (SMFrameAdditions)
 
-- (CGPoint)smOrigin { return self.frame.origin; }
-- (void)setSmOrigin:(CGPoint)origin { self.frame = (CGRect){ .origin=origin, .size=self.frame.size }; }
+- (CGPoint)frameOrigin { return self.frame.origin; }
+- (void)setFrameOrigin:(CGPoint)origin { self.frame = (CGRect){ .origin=origin, .size=self.frame.size }; }
 
-- (CGFloat)smX { return self.frame.origin.x; }
-- (void)setSmX:(CGFloat)x { self.frame = (CGRect){ .origin.x=x, .origin.y=self.frame.origin.y, .size=self.frame.size }; }
+- (CGFloat)frameX { return self.frame.origin.x; }
+- (void)setFrameX:(CGFloat)x { self.frame = (CGRect){ .origin.x=x, .origin.y=self.frame.origin.y, .size=self.frame.size }; }
 
-- (CGFloat)smY { return self.frame.origin.y; }
-- (void)setSmY:(CGFloat)y { self.frame = (CGRect){ .origin.x=self.frame.origin.x, .origin.y=y, .size=self.frame.size }; }
+- (CGFloat)frameY { return self.frame.origin.y; }
+- (void)setFrameY:(CGFloat)y { self.frame = (CGRect){ .origin.x=self.frame.origin.x, .origin.y=y, .size=self.frame.size }; }
 
-- (CGSize)smSize { return self.frame.size; }
-- (void)setSmSize:(CGSize)size { self.frame = (CGRect){ .origin=self.frame.origin, .size=size }; }
+- (CGSize)frameSize { return self.frame.size; }
+- (void)setFrameSize:(CGSize)size { self.frame = (CGRect){ .origin=self.frame.origin, .size=size }; }
 
-- (CGFloat)smWidth { return self.frame.size.width; }
-- (void)setSmWidth:(CGFloat)width { self.frame = (CGRect){ .origin=self.frame.origin, .size.width=width, .size.height=self.frame.size.height }; }
+- (CGFloat)frameWidth { return self.frame.size.width; }
+- (void)setFrameWidth:(CGFloat)width { self.frame = (CGRect){ .origin=self.frame.origin, .size.width=width, .size.height=self.frame.size.height }; }
 
-- (CGFloat)smHeight { return self.frame.size.height; }
-- (void)setSmHeight:(CGFloat)height { self.frame = (CGRect){ .origin=self.frame.origin, .size.width=self.frame.size.width, .size.height=height }; }
+- (CGFloat)frameHeight { return self.frame.size.height; }
+- (void)setFrameHeight:(CGFloat)height { self.frame = (CGRect){ .origin=self.frame.origin, .size.width=self.frame.size.width, .size.height=height }; }
 
-- (CGFloat)smLeft { return self.frame.origin.x; }
-- (void)setSmLeft:(CGFloat)left { self.frame = (CGRect){ .origin.x=left, .origin.y=self.frame.origin.y, .size.width=(CGFloat)fmax(self.frame.origin.x+self.frame.size.width-left,0), .size.height=self.frame.size.height }; }
+- (CGFloat)frameLeft { return self.frame.origin.x; }
+- (void)setFrameLeft:(CGFloat)left { self.frame = (CGRect){ .origin.x=left, .origin.y=self.frame.origin.y, .size.width=fmaxf(self.frame.origin.x+self.frame.size.width-left,0), .size.height=self.frame.size.height }; }
 
-- (CGFloat)smTop { return self.frame.origin.y; }
-- (void)setSmTop:(CGFloat)top { self.frame = (CGRect){ .origin.x=self.frame.origin.x, .origin.y=top, .size.width=self.frame.size.width, .size.height=(CGFloat)fmax(self.frame.origin.y+self.frame.size.height-top,0) }; }
+- (CGFloat)frameTop { return self.frame.origin.y; }
+- (void)setFrameTop:(CGFloat)top { self.frame = (CGRect){ .origin.x=self.frame.origin.x, .origin.y=top, .size.width=self.frame.size.width, .size.height=fmaxf(self.frame.origin.y+self.frame.size.height-top,0) }; }
 
-- (CGFloat)smRight { return self.frame.origin.x + self.frame.size.width; }
-- (void)setSmRight:(CGFloat)right { self.frame = (CGRect){ .origin=self.frame.origin, .size.width=(CGFloat)fmax(right-self.frame.origin.x,0), .size.height=self.frame.size.height }; }
+- (CGFloat)frameRight { return self.frame.origin.x + self.frame.size.width; }
+- (void)setFrameRight:(CGFloat)right { self.frame = (CGRect){ .origin=self.frame.origin, .size.width=fmaxf(right-self.frame.origin.x,0), .size.height=self.frame.size.height }; }
 
-- (CGFloat)smBottom { return self.frame.origin.y + self.frame.size.height; }
-- (void)setSmBottom:(CGFloat)bottom { self.frame = (CGRect){ .origin=self.frame.origin, .size.width=self.frame.size.width, .size.height=(CGFloat)fmax(bottom-self.frame.origin.y,0) }; }
+- (CGFloat)frameBottom { return self.frame.origin.y + self.frame.size.height; }
+- (void)setFrameBottom:(CGFloat)bottom { self.frame = (CGRect){ .origin=self.frame.origin, .size.width=self.frame.size.width, .size.height=fmaxf(bottom-self.frame.origin.y,0) }; }
 
 @end

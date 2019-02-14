@@ -61,7 +61,7 @@ NSTimeInterval const kSMCalloutViewRepositionDelayForUIScrollView = 1.0/3.0;
         self.containerView = [UIButton new];
         self.containerView.isAccessibilityElement = NO;
         self.isAccessibilityElement = NO;
-        self.contentViewInset = UIEdgeInsetsMake(12, 12, 12, 12);
+        self.contentViewInset = UIEdgeInsetsMake(2, 2, 2, 2);
 
         [self.containerView addTarget:self action:@selector(highlightIfNecessary) forControlEvents:UIControlEventTouchDown | UIControlEventTouchDragInside];
         [self.containerView addTarget:self action:@selector(unhighlightIfNecessary) forControlEvents:UIControlEventTouchDragOutside | UIControlEventTouchCancel | UIControlEventTouchUpOutside | UIControlEventTouchUpInside];

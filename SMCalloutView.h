@@ -154,6 +154,10 @@ extern NSTimeInterval const kSMCalloutViewRepositionDelayForUIScrollView;
 @property (nonatomic, assign) CGFloat anchorHeight;
 /// the smallest possible distance from the edge of our control to the "tip" of the anchor, from either left or right
 @property (nonatomic, assign) CGFloat anchorMargin;
+/// colors
+@property (nonatomic, strong) UIColor *normalBackgroundColor;
+@property (nonatomic, strong) UIColor *highlightedBackgroundColor;
+@property (nonatomic, strong) UIColor *borderColor;
 @end
 
 /// Default for iOS 7, this reproduces the "masked" behavior of the iOS 7-style callout view.
